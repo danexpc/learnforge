@@ -52,6 +52,13 @@ paths:
                   topic: "Science"
                   level: "beginner"
                   mode: "lesson"
+              withMeme:
+                summary: With meme generation enabled
+                value:
+                  text: "Photosynthesis is how plants make food using sunlight."
+                  topic: "Biology"
+                  level: "beginner"
+                  generate_meme: true
       responses:
         '200':
           description: Successfully processed text
@@ -271,6 +278,11 @@ components:
           default: en
           description: Language code (ISO 639-1)
           example: "en"
+        generate_meme:
+          type: boolean
+          default: false
+          description: Whether to generate a meme related to the topic (beta feature)
+          example: false
         idempotency_key:
           type: string
           nullable: true
@@ -319,6 +331,11 @@ components:
           items:
             $ref: '#/components/schemas/QuizItem'
           description: Generated quiz questions
+        meme_url:
+          type: string
+          nullable: true
+          description: URL to generated meme image (only present if generate_meme was true)
+          example: "https://i.imgflip.com/abc123.jpg"
         meta:
           $ref: '#/components/schemas/Meta'
         created_at:
