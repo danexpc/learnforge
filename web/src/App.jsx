@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'preact/hooks';
 import { processText, regenerateMeme, getResult } from './utils/api';
+import { saveLesson } from './utils/storage';
 import Button from './components/Button';
 import Card from './components/Card';
 import Loading from './components/Loading';
 import Flashcard from './components/Flashcard';
 import QuizItem from './components/QuizItem';
 import Meme from './components/Meme';
+import SavedLessons from './components/SavedLessons';
 
 export default function App() {
   const [text, setText] = useState('');
@@ -32,41 +34,49 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    const loadFromURL = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get('id');
+  const loadLessonById = async (id) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getResult(id);
+      setResult(response);
       
-      if (id) {
-        setLoading(true);
-        setError(null);
-        try {
-          const response = await getResult(id);
-          setResult(response);
-          
-          if (response.topic) {
-            setTopic(response.topic);
-          }
-          
-          if (response.meme_url) {
-            setMemeUrls([response.meme_url]);
-            setGenerateMeme(true);
-            generateAdditionalMemes(response.topic, response.quiz?.[0]?.q || response.flashcards?.[0]?.q);
-          } else {
-            setMemeUrls([]);
-          }
-        } catch (err) {
-          setError(err.message || 'Failed to load content');
-          const newUrl = new URL(window.location);
-          newUrl.searchParams.delete('id');
-          window.history.replaceState({}, '', newUrl);
-        } finally {
-          setLoading(false);
-        }
+      if (response.topic) {
+        setTopic(response.topic);
       }
-    };
+      
+      if (response.meme_url) {
+        setMemeUrls([response.meme_url]);
+        setGenerateMeme(true);
+        generateAdditionalMemes(response.topic, response.quiz?.[0]?.q || response.flashcards?.[0]?.q);
+      } else {
+        setMemeUrls([]);
+      }
 
-    loadFromURL();
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('id', id);
+      window.history.pushState({}, '', newUrl);
+    } catch (err) {
+      if (err.message.includes('not found') || err.message.includes('404')) {
+        setError('This lesson no longer exists. It may have been deleted or expired.');
+      } else {
+        setError(err.message || 'Failed to load content');
+      }
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.delete('id');
+      window.history.replaceState({}, '', newUrl);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    
+    if (id) {
+      loadLessonById(id);
+    }
   }, []);
 
   const handleSubmit = async (e) => {
@@ -92,12 +102,18 @@ export default function App() {
         const newUrl = new URL(window.location);
         newUrl.searchParams.set('id', response.id);
         window.history.pushState({}, '', newUrl);
+
+        saveLesson({
+          id: response.id,
+          topic: response.topic,
+          mode: mode,
+          level: level,
+          createdAt: response.created_at || new Date().toISOString(),
+        });
       }
       
-      // Initialize meme URLs array (generate 3 memes if meme generation is enabled)
       if (response.meme_url && generateMeme) {
         setMemeUrls([response.meme_url]);
-        // Generate 2 more memes in the background
         generateAdditionalMemes(response.topic, response.quiz?.[0]?.q || response.flashcards?.[0]?.q);
       } else {
         setMemeUrls([]);
@@ -175,7 +191,9 @@ export default function App() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {!result ? (
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <SavedLessons onLoadLesson={loadLessonById} />
+            
             <Card title="Transform Text into Learning Content">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Text Input */}

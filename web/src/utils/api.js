@@ -21,6 +21,10 @@ export async function getResult(id) {
   const response = await fetch(`${API_BASE}/v1/process/${id}`);
 
   if (!response.ok) {
+    if (response.status === 404) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error?.message || 'Result not found');
+    }
     const error = await response.json();
     throw new Error(error.error?.message || 'Failed to get result');
   }
