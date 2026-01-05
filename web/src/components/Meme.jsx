@@ -2,9 +2,8 @@ import { useState, useEffect } from 'preact/hooks';
 
 export default function Meme({ memeUrl, topic, question, onRegenerate, regenerating, expectingMeme = false }) {
   const [imageError, setImageError] = useState(false);
-  const [imageLoading, setImageLoading] = useState(!!memeUrl); // Start loading if URL exists
+  const [imageLoading, setImageLoading] = useState(!!memeUrl);
 
-  // Reset loading state when memeUrl changes
   useEffect(() => {
     if (memeUrl) {
       setImageLoading(true);
@@ -12,7 +11,6 @@ export default function Meme({ memeUrl, topic, question, onRegenerate, regenerat
     }
   }, [memeUrl]);
 
-  // Consistent height for all states to prevent layout shifts
   const contentHeight = "min-h-[200px]";
 
   return (
@@ -46,7 +44,6 @@ export default function Meme({ memeUrl, topic, question, onRegenerate, regenerat
           </div>
         ) : memeUrl ? (
           <>
-            {/* Loading overlay - always rendered when loading to prevent layout shift */}
             <div className={`absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-200 ${
               imageLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}>
@@ -55,9 +52,8 @@ export default function Meme({ memeUrl, topic, question, onRegenerate, regenerat
                 <p className="text-xs text-gray-500">Loading...</p>
               </div>
             </div>
-            {/* Image - always rendered to prevent layout shift */}
             <img
-              key={memeUrl} // Force re-render on URL change to prevent duplicates
+              key={memeUrl}
               src={memeUrl}
               alt={`Meme about ${topic}`}
               className={`w-full h-auto rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-opacity duration-300 ${

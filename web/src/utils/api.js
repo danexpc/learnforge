@@ -29,8 +29,6 @@ export async function getResult(id) {
 }
 
 export async function regenerateMeme(topic, question) {
-  // Create a minimal request just for meme generation
-  // Using a short text to minimize processing time
   const response = await fetch(`${API_BASE}/v1/process`, {
     method: 'POST',
     headers: {
@@ -38,7 +36,7 @@ export async function regenerateMeme(topic, question) {
     },
     body: JSON.stringify({
       text: `${topic}. ${question || 'Educational content'}`,
-      mode: 'flashcards', // Use flashcards mode for faster processing
+      mode: 'flashcards',
       topic: topic,
       generate_meme: true,
     }),
