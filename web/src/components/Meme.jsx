@@ -1,7 +1,19 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 
-export default function Meme({ memeUrl, topic, question, onRegenerate, regenerating }) {
+export default function Meme({ memeUrl, topic, question, onRegenerate, regenerating, expectingMeme = false }) {
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(!!memeUrl); // Start loading if URL exists
+
+  // Reset loading state when memeUrl changes
+  useEffect(() => {
+    if (memeUrl) {
+      setImageLoading(true);
+      setImageError(false);
+    }
+  }, [memeUrl]);
+
+  // Consistent height for all states to prevent layout shifts
+  const contentHeight = "min-h-[200px]";
 
   return (
     <div className="bg-white rounded-lg shadow-md p-3 border border-gray-200">
@@ -21,34 +33,53 @@ export default function Meme({ memeUrl, topic, question, onRegenerate, regenerat
         </button>
       </div>
       
-      {regenerating && !memeUrl ? (
-        <div className="flex items-center justify-center h-24 bg-gray-50 rounded">
+      <div className={`${contentHeight} relative bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center`}>
+        {regenerating && !memeUrl ? (
           <div className="text-center">
-            <div className="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-1"></div>
+            <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
             <p className="text-xs text-gray-500">Generating...</p>
           </div>
-        </div>
-      ) : memeUrl && !imageError ? (
-        <div className="flex justify-center">
-          <img
-            key={memeUrl} // Force re-render on URL change to prevent duplicates
-            src={memeUrl}
-            alt={`Meme about ${topic}`}
-            className="w-full h-auto rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-            onError={() => setImageError(true)}
-            onClick={() => window.open(memeUrl, '_blank')}
-            title="Click to view full size"
-          />
-        </div>
-      ) : imageError ? (
-        <div className="text-center py-3 text-xs text-gray-500">
-          Failed to load
-        </div>
-      ) : (
-        <div className="flex items-center justify-center h-24 bg-gray-50 rounded">
+        ) : expectingMeme && !memeUrl ? (
+          <div className="text-center">
+            <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+            <p className="text-xs text-gray-500">Generating...</p>
+          </div>
+        ) : memeUrl ? (
+          <>
+            {/* Loading overlay - always rendered when loading to prevent layout shift */}
+            <div className={`absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-200 ${
+              imageLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}>
+              <div className="text-center">
+                <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+                <p className="text-xs text-gray-500">Loading...</p>
+              </div>
+            </div>
+            {/* Image - always rendered to prevent layout shift */}
+            <img
+              key={memeUrl} // Force re-render on URL change to prevent duplicates
+              src={memeUrl}
+              alt={`Meme about ${topic}`}
+              className={`w-full h-auto rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-opacity duration-300 ${
+                imageLoading ? 'opacity-0' : 'opacity-100'
+              }`}
+              onLoad={() => setImageLoading(false)}
+              onError={() => {
+                setImageError(true);
+                setImageLoading(false);
+              }}
+              onClick={() => window.open(memeUrl, '_blank')}
+              title="Click to view full size"
+            />
+          </>
+        ) : imageError ? (
+          <div className="text-center text-xs text-gray-500">
+            Failed to load
+          </div>
+        ) : (
           <p className="text-xs text-gray-400">No meme</p>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

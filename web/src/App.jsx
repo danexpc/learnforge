@@ -1,5 +1,5 @@
-import { useState } from 'preact/hooks';
-import { processText, regenerateMeme } from './utils/api';
+import { useState, useEffect } from 'preact/hooks';
+import { processText, regenerateMeme, getResult } from './utils/api';
 import Button from './components/Button';
 import Card from './components/Card';
 import Loading from './components/Loading';
@@ -34,6 +34,48 @@ export default function App() {
     }
   };
 
+  // Load content from URL on mount
+  useEffect(() => {
+    const loadFromURL = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      
+      if (id) {
+        setLoading(true);
+        setError(null);
+        try {
+          const response = await getResult(id);
+          setResult(response);
+          
+          // Set form values from the loaded result
+          if (response.topic) {
+            setTopic(response.topic);
+          }
+          
+          // Load meme URLs if available
+          if (response.meme_url) {
+            setMemeUrls([response.meme_url]);
+            setGenerateMeme(true);
+            // Generate 2 more memes in the background
+            generateAdditionalMemes(response.topic, response.quiz?.[0]?.q || response.flashcards?.[0]?.q);
+          } else {
+            setMemeUrls([]);
+          }
+        } catch (err) {
+          setError(err.message || 'Failed to load content');
+          // Clear invalid ID from URL
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.delete('id');
+          window.history.replaceState({}, '', newUrl);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadFromURL();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -52,6 +94,14 @@ export default function App() {
 
       const response = await processText(data);
       setResult(response);
+      
+      // Update URL with the result ID
+      if (response.id) {
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('id', response.id);
+        window.history.pushState({}, '', newUrl);
+      }
+      
       // Initialize meme URLs array (generate 3 memes if meme generation is enabled)
       if (response.meme_url && generateMeme) {
         setMemeUrls([response.meme_url]);
@@ -77,6 +127,11 @@ export default function App() {
     setError(null);
     setRegeneratingMeme({});
     setMemeUrls([]);
+    
+    // Clear ID from URL
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.delete('id');
+    window.history.replaceState({}, '', newUrl);
   };
 
   const handleRegenerateMeme = async (index) => {
@@ -258,7 +313,7 @@ export default function App() {
             </div>
 
             {/* Memes - 3 in a row */}
-            {memeUrls.length > 0 && (
+            {generateMeme && result && (
               <Card title="🎨 Memes (Beta)">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[0, 1, 2].map((index) => (
@@ -269,6 +324,7 @@ export default function App() {
                       question={result.quiz?.[0]?.q || result.flashcards?.[0]?.q}
                       onRegenerate={() => handleRegenerateMeme(index)}
                       regenerating={regeneratingMeme[index] || false}
+                      expectingMeme={true}
                     />
                   ))}
                 </div>
