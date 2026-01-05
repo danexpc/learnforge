@@ -34,10 +34,7 @@ export default function App() {
     }
   };
 
-  const [loadingLesson, setLoadingLesson] = useState(false);
-
   const loadLessonById = async (id) => {
-    setLoadingLesson(true);
     setError(null);
     try {
       const response = await getResult(id);
@@ -67,8 +64,6 @@ export default function App() {
       const newUrl = new URL(window.location);
       newUrl.searchParams.delete('id');
       window.history.replaceState({}, '', newUrl);
-    } finally {
-      setLoadingLesson(false);
     }
   };
 

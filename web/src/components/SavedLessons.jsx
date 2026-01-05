@@ -8,6 +8,7 @@ export default function SavedLessons({ onLoadLesson }) {
   const [savedLessons, setSavedLessons] = useState([]);
   const [loadingIds, setLoadingIds] = useState(new Set());
   const [errorIds, setErrorIds] = useState(new Set());
+  const [loadingLessonId, setLoadingLessonId] = useState(null);
 
   useEffect(() => {
     loadSavedLessons();
@@ -47,7 +48,12 @@ export default function SavedLessons({ onLoadLesson }) {
 
   const handleLoad = async (lesson) => {
     if (onLoadLesson) {
-      onLoadLesson(lesson.id);
+      setLoadingLessonId(lesson.id);
+      try {
+        await onLoadLesson(lesson.id);
+      } finally {
+        setLoadingLessonId(null);
+      }
     }
   };
 
@@ -75,6 +81,7 @@ export default function SavedLessons({ onLoadLesson }) {
         {savedLessons.map((lesson) => {
           const isLoading = loadingIds.has(lesson.id);
           const hasError = errorIds.has(lesson.id);
+          const isLoadingLesson = loadingLessonId === lesson.id;
 
           return (
             <div
@@ -82,9 +89,11 @@ export default function SavedLessons({ onLoadLesson }) {
               className={`p-4 border rounded-lg transition-all ${
                 hasError
                   ? 'border-red-200 bg-red-50'
+                  : isLoadingLesson
+                  ? 'border-blue-300 bg-blue-50'
                   : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md cursor-pointer'
               }`}
-              onClick={() => !hasError && handleLoad(lesson)}
+              onClick={() => !hasError && !isLoadingLesson && handleLoad(lesson)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -109,7 +118,7 @@ export default function SavedLessons({ onLoadLesson }) {
                   )}
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  {isLoading && (
+                  {(isLoading || isLoadingLesson) && (
                     <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                   )}
                   <button
