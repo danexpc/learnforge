@@ -193,12 +193,8 @@ export default function App() {
         {!result ? (
           <div className="max-w-3xl mx-auto space-y-6">
             <Card title="Transform Text into Learning Content">
-              {loading ? (
-                <div className="py-8">
-                  <Loading message="AI is processing your text and generating learning content..." />
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="relative">
+                <form onSubmit={handleSubmit} className={`space-y-6 ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Text Input */}
                 <div>
                   <label htmlFor="text" className="block text-sm font-medium text-gray-700 mb-2">
@@ -295,7 +291,13 @@ export default function App() {
                   {loading ? 'Processing...' : 'Generate Learning Content'}
                 </Button>
               </form>
+              
+              {loading && (
+                <div className="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center rounded-lg z-10">
+                  <Loading message="AI is processing your text and generating learning content..." />
+                </div>
               )}
+              </div>
             </Card>
 
             {/* Saved Lessons - Below form */}
