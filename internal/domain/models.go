@@ -9,6 +9,7 @@ type ProcessRequest struct {
 	Topic         *string `json:"topic,omitempty"`
 	Level         *string `json:"level,omitempty"` // beginner, intermediate, advanced
 	Language      string  `json:"language,omitempty"`
+	GenerateMeme  bool    `json:"generate_meme,omitempty"` // whether to generate a meme
 	IdempotencyKey *string `json:"idempotency_key,omitempty"`
 }
 
@@ -22,6 +23,7 @@ type ProcessResponse struct {
 	KeyPoints       []string  `json:"key_points"`
 	Flashcards      []Flashcard `json:"flashcards"`
 	Quiz            []QuizItem  `json:"quiz"`
+	MemeURL         *string   `json:"meme_url,omitempty"` // URL to generated meme image
 	Meta            Meta      `json:"meta"`
 	CreatedAt       time.Time `json:"created_at"`
 }

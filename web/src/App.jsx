@@ -1,25 +1,45 @@
 import { useState } from 'preact/hooks';
-import { processText } from './utils/api';
+import { processText, regenerateMeme } from './utils/api';
 import Button from './components/Button';
 import Card from './components/Card';
 import Loading from './components/Loading';
 import Flashcard from './components/Flashcard';
 import QuizItem from './components/QuizItem';
+import Meme from './components/Meme';
 
 export default function App() {
   const [text, setText] = useState('');
   const [mode, setMode] = useState('lesson');
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState('beginner');
+  const [generateMeme, setGenerateMeme] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+  const [regeneratingMeme, setRegeneratingMeme] = useState({});
+  const [memeUrls, setMemeUrls] = useState([]);
+
+  const generateAdditionalMemes = async (topic, question) => {
+    // Generate 2 more memes to have 3 total
+    for (let i = 0; i < 2; i++) {
+      try {
+        const newMemeUrl = await regenerateMeme(topic, question);
+        if (newMemeUrl) {
+          setMemeUrls(prev => [...prev, newMemeUrl]);
+        }
+      } catch (err) {
+        console.error('Failed to generate additional meme:', err);
+        // Continue with other memes even if one fails
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setResult(null);
+    setMemeUrls([]);
 
     try {
       const data = {
@@ -27,10 +47,19 @@ export default function App() {
         mode,
         ...(topic && { topic }),
         level,
+        generate_meme: generateMeme,
       };
 
       const response = await processText(data);
       setResult(response);
+      // Initialize meme URLs array (generate 3 memes if meme generation is enabled)
+      if (response.meme_url && generateMeme) {
+        setMemeUrls([response.meme_url]);
+        // Generate 2 more memes in the background
+        generateAdditionalMemes(response.topic, response.quiz?.[0]?.q || response.flashcards?.[0]?.q);
+      } else {
+        setMemeUrls([]);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -43,8 +72,35 @@ export default function App() {
     setMode('lesson');
     setTopic('');
     setLevel('beginner');
+    setGenerateMeme(false);
     setResult(null);
     setError(null);
+    setRegeneratingMeme({});
+    setMemeUrls([]);
+  };
+
+  const handleRegenerateMeme = async (index) => {
+    if (!result) return;
+    
+    setRegeneratingMeme(prev => ({ ...prev, [index]: true }));
+    try {
+      // Get question for meme
+      const question = result.quiz?.[0]?.q || result.flashcards?.[0]?.q || '';
+      
+      const newMemeUrl = await regenerateMeme(result.topic, question);
+      if (newMemeUrl) {
+        setMemeUrls(prev => {
+          const updated = [...prev];
+          updated[index] = newMemeUrl;
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to regenerate meme:', err);
+      // Silently fail - meme generation is optional
+    } finally {
+      setRegeneratingMeme(prev => ({ ...prev, [index]: false }));
+    }
   };
 
   return (
@@ -141,6 +197,20 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Generate Meme Option */}
+                <div className="flex items-center">
+                  <input
+                    id="generateMeme"
+                    type="checkbox"
+                    checked={generateMeme}
+                    onChange={(e) => setGenerateMeme(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="generateMeme" className="ml-2 text-sm text-gray-700">
+                    Generate memes related to the topic <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded ml-1">BETA</span>
+                  </label>
+                </div>
+
                 {/* Error Message */}
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -172,18 +242,38 @@ export default function App() {
         ) : (
           <div className="space-y-6">
             {/* Result Header */}
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
                 <h2 className="text-2xl font-bold text-gray-800">Generated Content</h2>
                 <p className="text-gray-600 mt-1">
                   Topic: <span className="font-semibold">{result.topic}</span> • 
                   Level: <span className="font-semibold capitalize">{level}</span>
                 </p>
               </div>
-              <Button onClick={handleReset} variant="secondary">
-                Create New
-              </Button>
+              <div className="flex flex-col gap-2 items-end">
+                <Button onClick={handleReset} variant="secondary">
+                  Create New
+                </Button>
+              </div>
             </div>
+
+            {/* Memes - 3 in a row */}
+            {memeUrls.length > 0 && (
+              <Card title="🎨 Memes (Beta)">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[0, 1, 2].map((index) => (
+                    <Meme
+                      key={index}
+                      memeUrl={memeUrls[index]}
+                      topic={result.topic}
+                      question={result.quiz?.[0]?.q || result.flashcards?.[0]?.q}
+                      onRegenerate={() => handleRegenerateMeme(index)}
+                      regenerating={regeneratingMeme[index] || false}
+                    />
+                  ))}
+                </div>
+              </Card>
+            )}
 
             {/* Summary */}
             {result.summary && (

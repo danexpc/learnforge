@@ -206,6 +206,82 @@ func (c *OpenAIClient) makeRequest(ctx context.Context, apiReq map[string]interf
 	return response, nil
 }
 
+// GenerateMeme generates a meme image using DALL-E, with fallback to Imgflip
+func (c *OpenAIClient) GenerateMeme(ctx context.Context, topic, question string) (string, error) {
+	// Try DALL-E first
+	memeURL, err := c.generateMemeDALLE(ctx, topic, question)
+	if err == nil {
+		return memeURL, nil
+	}
+
+	// Fallback to free Imgflip API if DALL-E fails
+	imgflip := NewImgflipMemeGenerator()
+	return imgflip.GenerateMeme(ctx, topic, question)
+}
+
+// generateMemeDALLE generates a meme using DALL-E
+func (c *OpenAIClient) generateMemeDALLE(ctx context.Context, topic, question string) (string, error) {
+	// Create a fun, educational meme prompt
+	var prompt string
+	if question != "" {
+		prompt = fmt.Sprintf("Create a funny, educational meme image about '%s'. The meme should relate to the question: '%s'. Make it humorous but educational, suitable for learning. Style: clean, modern meme format with text overlay.", topic, question)
+	} else {
+		prompt = fmt.Sprintf("Create a funny, educational meme image about '%s'. Make it humorous but educational, suitable for learning. Style: clean, modern meme format with text overlay.", topic)
+	}
+
+	apiReq := map[string]interface{}{
+		"model":  "dall-e-3",
+		"prompt": prompt,
+		"n":      1,
+		"size":   "1024x1024",
+		"quality": "standard", // Use standard quality for faster generation
+	}
+
+	reqBody, err := json.Marshal(apiReq)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/v1/images/generations", bytes.NewBuffer(reqBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+
+	// Use a longer timeout for image generation (DALL-E can take 30-60 seconds)
+	imageClient := &http.Client{
+		Timeout: 60 * time.Second,
+	}
+	resp, err := imageClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var apiResp struct {
+		Data []struct {
+			URL string `json:"url"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if len(apiResp.Data) == 0 {
+		return "", fmt.Errorf("no image URL in response")
+	}
+
+	return apiResp.Data[0].URL, nil
+}
+
 func isRetryableError(err error) bool {
 	if err == nil {
 		return false

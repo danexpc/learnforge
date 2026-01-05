@@ -28,3 +28,28 @@ export async function getResult(id) {
   return response.json();
 }
 
+export async function regenerateMeme(topic, question) {
+  // Create a minimal request just for meme generation
+  // Using a short text to minimize processing time
+  const response = await fetch(`${API_BASE}/v1/process`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: `${topic}. ${question || 'Educational content'}`,
+      mode: 'flashcards', // Use flashcards mode for faster processing
+      topic: topic,
+      generate_meme: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || 'Failed to regenerate meme');
+  }
+
+  const data = await response.json();
+  return data.meme_url;
+}
+

@@ -219,3 +219,9 @@ func (c *GeminiClient) makeRequest(ctx context.Context, apiReq map[string]interf
 
 	return response, nil
 }
+
+// GenerateMeme generates a meme using free Imgflip API
+func (c *GeminiClient) GenerateMeme(ctx context.Context, topic, question string) (string, error) {
+	imgflip := NewImgflipMemeGenerator()
+	return imgflip.GenerateMeme(ctx, topic, question)
+}
