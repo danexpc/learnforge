@@ -2,17 +2,18 @@ package http
 
 import (
 	"encoding/json"
-	"learnforge/internal/domain"
-	"learnforge/internal/summary"
 	"net/http"
 	"time"
+
+	"learnforge/internal/domain"
+	"learnforge/internal/summary"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type SummaryHandler struct {
-	service  *summary.Service
-	apiKey   string
+	service *summary.Service
+	apiKey  string
 }
 
 func NewSummaryHandler(service *summary.Service, apiKey string) *SummaryHandler {
@@ -80,4 +81,3 @@ func (h *SummaryHandler) writeJSON(w http.ResponseWriter, statusCode int, data i
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(data)
 }
-

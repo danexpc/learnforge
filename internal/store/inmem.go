@@ -2,9 +2,10 @@ package store
 
 import (
 	"context"
-	"learnforge/internal/domain"
 	"sync"
 	"time"
+
+	"learnforge/internal/domain"
 )
 
 type InMemStore struct {
@@ -38,7 +39,7 @@ func (s *InMemStore) Get(ctx context.Context, id string) (*domain.StoredResult, 
 func (s *InMemStore) GetByTopic(ctx context.Context, topic string, limit int) ([]*domain.StoredResult, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	var results []*domain.StoredResult
 	for _, result := range s.results {
 		if result.Topic == topic {
@@ -54,7 +55,7 @@ func (s *InMemStore) GetByTopic(ctx context.Context, topic string, limit int) ([
 func (s *InMemStore) GetByDateRange(ctx context.Context, start, end time.Time) ([]*domain.StoredResult, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	var results []*domain.StoredResult
 	for _, result := range s.results {
 		if !result.CreatedAt.Before(start) && !result.CreatedAt.After(end) {
@@ -67,4 +68,3 @@ func (s *InMemStore) GetByDateRange(ctx context.Context, start, end time.Time) (
 func (s *InMemStore) Close() error {
 	return nil
 }
-

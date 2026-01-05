@@ -2,9 +2,10 @@ package store
 
 import (
 	"context"
-	"learnforge/internal/domain"
 	"testing"
 	"time"
+
+	"learnforge/internal/domain"
 )
 
 func TestInMemStore_SaveAndGet(t *testing.T) {
@@ -59,4 +60,3 @@ func TestInMemStore_GetNotFound(t *testing.T) {
 		t.Errorf("Expected ErrorCodeNotFound, got %s", domainErr.Code)
 	}
 }
-

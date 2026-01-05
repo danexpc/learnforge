@@ -3,8 +3,9 @@ package store
 import (
 	"context"
 	"database/sql"
-	"learnforge/internal/domain"
 	"time"
+
+	"learnforge/internal/domain"
 
 	_ "github.com/lib/pq"
 )
@@ -160,4 +161,3 @@ func (s *PostgresStore) GetByDateRange(ctx context.Context, start, end time.Time
 func (s *PostgresStore) Close() error {
 	return s.db.Close()
 }
-

@@ -12,16 +12,19 @@ import (
 	"learnforge/internal/domain"
 )
 
-type OpenAIClient struct {
+type GeminiClient struct {
 	baseURL    string
 	apiKey     string
 	model      string
 	httpClient *http.Client
 }
 
-func NewOpenAIClient(baseURL, apiKey, model string) *OpenAIClient {
-	return &OpenAIClient{
-		baseURL: baseURL,
+func NewGeminiClient(apiKey, model string) *GeminiClient {
+	if model == "" {
+		model = "gemini-2.0-flash-exp"
+	}
+	return &GeminiClient{
+		baseURL: "https://generativelanguage.googleapis.com",
 		apiKey:  apiKey,
 		model:   model,
 		httpClient: &http.Client{
@@ -30,9 +33,10 @@ func NewOpenAIClient(baseURL, apiKey, model string) *OpenAIClient {
 	}
 }
 
-func (c *OpenAIClient) ProcessText(ctx context.Context, req *ProcessRequest) (*domain.ProcessResponse, error) {
+func (c *GeminiClient) ProcessText(ctx context.Context, req *ProcessRequest) (*domain.ProcessResponse, error) {
 	prompt := c.buildPrompt(req)
 	apiReq := c.createAPIRequest(prompt)
+
 	var resp *domain.ProcessResponse
 	var err error
 	for attempt := 0; attempt < 2; attempt++ {
@@ -45,20 +49,19 @@ func (c *OpenAIClient) ProcessText(ctx context.Context, req *ProcessRequest) (*d
 			break
 		}
 
-		// Check if error is retryable
 		if !isRetryableError(err) {
 			return nil, err
 		}
 	}
 
 	if err != nil {
-		return nil, domain.NewDomainError(domain.ErrorCodeUpstreamError, "failed to process text with AI", err)
+		return nil, domain.NewDomainError(domain.ErrorCodeUpstreamError, "failed to process text with Gemini", err)
 	}
 
 	return resp, nil
 }
 
-func (c *OpenAIClient) buildPrompt(req *ProcessRequest) string {
+func (c *GeminiClient) buildPrompt(req *ProcessRequest) string {
 	var promptBuilder bytes.Buffer
 
 	promptBuilder.WriteString("You are an educational content generator. Process the following text and create structured learning content.\n\n")
@@ -105,35 +108,38 @@ func (c *OpenAIClient) buildPrompt(req *ProcessRequest) string {
 	return promptBuilder.String()
 }
 
-func (c *OpenAIClient) createAPIRequest(prompt string) map[string]interface{} {
+func (c *GeminiClient) createAPIRequest(prompt string) map[string]interface{} {
 	return map[string]interface{}{
-		"model": c.model,
-		"messages": []map[string]interface{}{
+		"contents": []map[string]interface{}{
 			{
-				"role":    "user",
-				"content": prompt,
+				"parts": []map[string]interface{}{
+					{
+						"text": prompt,
+					},
+				},
 			},
 		},
-		"temperature": 0.7,
-		"response_format": map[string]string{
-			"type": "json_object",
+		"generationConfig": map[string]interface{}{
+			"temperature":      0.7,
+			"responseMimeType": "application/json",
 		},
 	}
 }
 
-func (c *OpenAIClient) makeRequest(ctx context.Context, apiReq map[string]interface{}) (*domain.ProcessResponse, error) {
+func (c *GeminiClient) makeRequest(ctx context.Context, apiReq map[string]interface{}) (*domain.ProcessResponse, error) {
+	url := fmt.Sprintf("%s/v1beta/models/%s:generateContent?key=%s", c.baseURL, c.model, c.apiKey)
+
 	reqBody, err := json.Marshal(apiReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/v1/chat/completions", bytes.NewBuffer(reqBody))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -147,20 +153,22 @@ func (c *OpenAIClient) makeRequest(ctx context.Context, apiReq map[string]interf
 	}
 
 	var apiResp struct {
-		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
-		Model string `json:"model"`
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text string `json:"text"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+		Model string `json:"model,omitempty"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	if len(apiResp.Choices) == 0 {
-		return nil, fmt.Errorf("no choices in response")
+	if len(apiResp.Candidates) == 0 || len(apiResp.Candidates[0].Content.Parts) == 0 {
+		return nil, fmt.Errorf("no content in response")
 	}
 
 	var content struct {
@@ -173,7 +181,8 @@ func (c *OpenAIClient) makeRequest(ctx context.Context, apiReq map[string]interf
 		Quiz            []domain.QuizItem  `json:"quiz"`
 	}
 
-	if err := json.Unmarshal([]byte(apiResp.Choices[0].Message.Content), &content); err != nil {
+	responseText := apiResp.Candidates[0].Content.Parts[0].Text
+	if err := json.Unmarshal([]byte(responseText), &content); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON content: %w", err)
 	}
 
@@ -188,6 +197,11 @@ func (c *OpenAIClient) makeRequest(ctx context.Context, apiReq map[string]interf
 		content.TopicConfidence = 1
 	}
 
+	modelName := c.model
+	if apiResp.Model != "" {
+		modelName = apiResp.Model
+	}
+
 	response := &domain.ProcessResponse{
 		Topic:           content.Topic,
 		TopicSource:     content.TopicSource,
@@ -197,39 +211,11 @@ func (c *OpenAIClient) makeRequest(ctx context.Context, apiReq map[string]interf
 		Flashcards:      content.Flashcards,
 		Quiz:            content.Quiz,
 		Meta: domain.Meta{
-			Model:    apiResp.Model,
-			Provider: "openai-compatible",
+			Model:    modelName,
+			Provider: "gemini",
 		},
 		CreatedAt: time.Now(),
 	}
 
 	return response, nil
-}
-
-func isRetryableError(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	if err == context.DeadlineExceeded {
-		return true
-	}
-
-	errStr := err.Error()
-	return contains(errStr, "timeout") || contains(errStr, "connection") || contains(errStr, "network")
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr ||
-		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
-			containsMiddle(s, substr))))
-}
-
-func containsMiddle(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

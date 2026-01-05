@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"learnforge/internal/cache"
-	"learnforge/internal/store"
-	"learnforge/internal/slack"
 	"sort"
 	"time"
+
+	"learnforge/internal/cache"
+	"learnforge/internal/slack"
+	"learnforge/internal/store"
 )
 
 type Service struct {
-	store     store.Store
-	cache     cache.Cache
-	slack     *slack.Client
-	slackErr  *slack.Client
+	store    store.Store
+	cache    cache.Cache
+	slack    *slack.Client
+	slackErr *slack.Client
 }
 
 func NewService(store store.Store, cache cache.Cache, slackSummary, slackError *slack.Client) *Service {
@@ -28,10 +29,10 @@ func NewService(store store.Store, cache cache.Cache, slackSummary, slackError *
 }
 
 type DailySummary struct {
-	Date        time.Time `json:"date"`
-	TotalRequests int     `json:"total_requests"`
-	Topics      []TopicStats `json:"topics"`
-	Errors      int       `json:"errors"`
+	Date          time.Time    `json:"date"`
+	TotalRequests int          `json:"total_requests"`
+	Topics        []TopicStats `json:"topics"`
+	Errors        int          `json:"errors"`
 }
 
 type TopicStats struct {
@@ -44,7 +45,7 @@ func (s *Service) GenerateDailySummary(ctx context.Context, date time.Time) (*Da
 	endOfDay := startOfDay.Add(24 * time.Hour)
 
 	key := fmt.Sprintf("summary:%s", startOfDay.Format("2006-01-02"))
-	
+
 	cached, err := s.cache.Get(ctx, key)
 	if err == nil && cached != "" {
 		var summary DailySummary
@@ -87,6 +88,10 @@ func (s *Service) GenerateDailySummary(ctx context.Context, date time.Time) (*Da
 }
 
 func (s *Service) SendSummaryToSlack(ctx context.Context, summary *DailySummary) error {
+	if s.slack == nil {
+		return nil
+	}
+
 	content := fmt.Sprintf(
 		"📊 *Daily Summary for %s*\n\n"+
 			"• Total Requests: %d\n"+
@@ -118,4 +123,3 @@ func (s *Service) LogError(ctx context.Context, err error, errorContext map[stri
 		}()
 	}
 }
-

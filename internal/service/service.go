@@ -6,16 +6,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"learnforge/internal/ai"
 	"learnforge/internal/domain"
 	"learnforge/internal/store"
-	"time"
 
 	"github.com/google/uuid"
 )
 
 type Service struct {
-	store  store.Store
+	store    store.Store
 	aiClient ai.Client
 }
 
@@ -149,4 +150,3 @@ func (s *Service) saveResult(ctx context.Context, req *domain.ProcessRequest, re
 
 	return s.store.Save(ctx, stored)
 }
-

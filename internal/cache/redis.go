@@ -1,3 +1,4 @@
+//go:build go1.21
 // +build go1.21
 
 package cache
@@ -61,4 +62,3 @@ func (r *RedisCache) Exists(ctx context.Context, key string) (bool, error) {
 func (r *RedisCache) Close() error {
 	return r.client.Close()
 }
-

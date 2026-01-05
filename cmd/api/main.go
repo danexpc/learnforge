@@ -2,6 +2,13 @@ package main
 
 import (
 	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"learnforge/internal/ai"
 	"learnforge/internal/cache"
 	"learnforge/internal/config"
@@ -10,12 +17,6 @@ import (
 	"learnforge/internal/store"
 	"learnforge/internal/summary"
 	httptransport "learnforge/internal/transport/http"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -48,7 +49,15 @@ func main() {
 	if cfg.AIApiKey == "" {
 		log.Fatal("AI_API_KEY is required")
 	}
-	aiClient := ai.NewOpenAIClient(cfg.AIBaseURL, cfg.AIApiKey, cfg.AIModel)
+
+	var aiClient ai.Client
+	if cfg.AIProvider == "gemini" {
+		aiClient = ai.NewGeminiClient(cfg.AIApiKey, cfg.AIModel)
+		log.Println(`{"level":"info","msg":"Using Gemini AI provider"}`)
+	} else {
+		aiClient = ai.NewOpenAIClient(cfg.AIBaseURL, cfg.AIApiKey, cfg.AIModel)
+		log.Println(`{"level":"info","msg":"Using OpenAI AI provider"}`)
+	}
 
 	svc := service.NewService(st, aiClient)
 
@@ -91,7 +100,7 @@ func main() {
 	r.Use(httptransport.MetricsMiddleware)
 
 	handler.RegisterRoutes(r)
-	
+
 	if cfg.SummaryAPIKey != "" {
 		summaryHandler := httptransport.NewSummaryHandler(summarySvc, cfg.SummaryAPIKey)
 		summaryHandler.RegisterRoutes(r)
@@ -129,4 +138,3 @@ func main() {
 
 	log.Println(`{"level":"info","msg":"Server exited"}`)
 }
-

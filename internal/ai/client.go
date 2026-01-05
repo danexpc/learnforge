@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+
 	"learnforge/internal/domain"
 )
 
@@ -16,4 +17,3 @@ type ProcessRequest struct {
 	Level    *string
 	Language string
 }
-

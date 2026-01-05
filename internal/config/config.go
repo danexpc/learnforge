@@ -10,17 +10,18 @@ import (
 )
 
 type Config struct {
-	Port                string `yaml:"port"`
-	Storage             string `yaml:"storage"`
-	DatabaseURL         string `yaml:"database_url"`
-	AIBaseURL           string `yaml:"ai_base_url"`
-	AIApiKey            string `yaml:"ai_api_key"`
-	AIModel             string `yaml:"ai_model"`
-	LogLevel            string `yaml:"log_level"`
-	SlackWebhookURL     string `yaml:"slack_webhook_url"`
+	Port                 string `yaml:"port"`
+	Storage              string `yaml:"storage"`
+	DatabaseURL          string `yaml:"database_url"`
+	AIProvider           string `yaml:"ai_provider"` // "openai" or "gemini"
+	AIBaseURL            string `yaml:"ai_base_url"`
+	AIApiKey             string `yaml:"ai_api_key"`
+	AIModel              string `yaml:"ai_model"`
+	LogLevel             string `yaml:"log_level"`
+	SlackWebhookURL      string `yaml:"slack_webhook_url"`
 	SlackErrorWebhookURL string `yaml:"slack_error_webhook_url"`
-	SummaryAPIKey       string `yaml:"summary_api_key"`
-	RedisURL            string `yaml:"redis_url"`
+	SummaryAPIKey        string `yaml:"summary_api_key"`
+	RedisURL             string `yaml:"redis_url"`
 }
 
 func Load() (*Config, error) {
@@ -53,14 +54,25 @@ func Load() (*Config, error) {
 	if cfg.DatabaseURL == "" {
 		cfg.DatabaseURL = getEnv("DATABASE_URL", "")
 	}
+	if cfg.AIProvider == "" {
+		cfg.AIProvider = getEnv("AI_PROVIDER", "openai")
+	}
 	if cfg.AIBaseURL == "" {
-		cfg.AIBaseURL = getEnv("AI_BASE_URL", "https://api.openai.com")
+		if cfg.AIProvider == "gemini" {
+			cfg.AIBaseURL = "https://generativelanguage.googleapis.com"
+		} else {
+			cfg.AIBaseURL = getEnv("AI_BASE_URL", "https://api.openai.com")
+		}
 	}
 	if cfg.AIApiKey == "" {
 		cfg.AIApiKey = getEnv("AI_API_KEY", "")
 	}
 	if cfg.AIModel == "" {
-		cfg.AIModel = getEnv("AI_MODEL", "gpt-3.5-turbo")
+		if cfg.AIProvider == "gemini" {
+			cfg.AIModel = getEnv("AI_MODEL", "gemini-2.0-flash-exp")
+		} else {
+			cfg.AIModel = getEnv("AI_MODEL", "gpt-3.5-turbo")
+		}
 	}
 	if cfg.LogLevel == "" {
 		cfg.LogLevel = getEnv("LOG_LEVEL", "info")
@@ -96,4 +108,3 @@ func getEnvInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
-

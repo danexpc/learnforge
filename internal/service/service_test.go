@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
-	"learnforge/internal/ai"
-	"learnforge/internal/domain"
 	"testing"
 	"time"
+
+	"learnforge/internal/ai"
+	"learnforge/internal/domain"
 )
 
 // mockAI is a mock AI client for testing
@@ -129,4 +130,3 @@ func TestService_ProcessText_Defaults(t *testing.T) {
 func stringPtr(s string) *string {
 	return &s
 }
-

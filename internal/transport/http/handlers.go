@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"learnforge/internal/domain"
-	"learnforge/internal/service"
 	"net/http"
 	"time"
+
+	"learnforge/internal/domain"
+	"learnforge/internal/service"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	service      *service.Service
+	service        *service.Service
 	summaryService interface {
 		LogError(ctx context.Context, err error, context map[string]string)
 	}
@@ -137,4 +138,3 @@ func (h *Handler) writeJSON(w http.ResponseWriter, statusCode int, data interfac
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(data)
 }
-

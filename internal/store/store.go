@@ -2,8 +2,9 @@ package store
 
 import (
 	"context"
-	"learnforge/internal/domain"
 	"time"
+
+	"learnforge/internal/domain"
 )
 
 type Store interface {
@@ -13,4 +14,3 @@ type Store interface {
 	GetByDateRange(ctx context.Context, start, end time.Time) ([]*domain.StoredResult, error)
 	Close() error
 }
-
