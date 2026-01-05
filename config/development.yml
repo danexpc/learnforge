@@ -1,0 +1,12 @@
+port: "8080"
+storage: "inmem"
+database_url: ""
+ai_base_url: "https://api.openai.com"
+ai_api_key: ""
+ai_model: "gpt-3.5-turbo"
+log_level: "info"
+slack_webhook_url: ""
+slack_error_webhook_url: ""
+summary_api_key: ""
+redis_url: ""
+
