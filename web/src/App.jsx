@@ -165,7 +165,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
@@ -186,7 +185,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {!result ? (
           <div className="max-w-3xl mx-auto space-y-6">
@@ -295,7 +293,6 @@ export default function App() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Result Header */}
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-gray-800">Generated Content</h2>
@@ -311,7 +308,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Memes - 3 in a row */}
             {generateMeme && result && (
               <Card title="🎨 Memes (Beta)">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -330,14 +326,12 @@ export default function App() {
               </Card>
             )}
 
-            {/* Summary */}
             {result.summary && (
               <Card title="Summary">
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{result.summary}</p>
               </Card>
             )}
 
-            {/* Key Points */}
             {result.key_points && result.key_points.length > 0 && (
               <Card title="Key Points">
                 <ul className="space-y-2">
@@ -353,7 +347,6 @@ export default function App() {
               </Card>
             )}
 
-            {/* Flashcards */}
             {result.flashcards && result.flashcards.length > 0 && (
               <Card title="Flashcards">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -364,7 +357,6 @@ export default function App() {
               </Card>
             )}
 
-            {/* Quiz */}
             {result.quiz && result.quiz.length > 0 && (
               <Card title="Quiz Questions">
                 {result.quiz.map((quiz, idx) => (
@@ -373,7 +365,6 @@ export default function App() {
               </Card>
             )}
 
-            {/* Metadata */}
             <Card className="bg-gray-50">
               <div className="text-sm text-gray-600 space-y-1">
                 <p>Generated in {result.meta?.processing_ms}ms</p>
@@ -385,7 +376,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-gray-600 text-sm">
