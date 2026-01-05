@@ -9,57 +9,43 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// RegisterWebRoutes serves the web UI from filesystem or placeholder
 func (h *Handler) RegisterWebRoutes(r chi.Router) {
-	// Check if web/dist exists
 	webDistPath := "web/dist"
 	if _, err := os.Stat(webDistPath); os.IsNotExist(err) {
-		// If web/dist doesn't exist, serve a placeholder
 		r.Get("/", h.serveWebPlaceholder)
 		return
 	}
 
-	// Serve static files from filesystem
 	workDir, _ := os.Getwd()
 	webDistFullPath := filepath.Join(workDir, webDistPath)
 	fileServer := http.FileServer(http.Dir(webDistFullPath))
 
-	// Serve static files with SPA fallback
-	// This catch-all route should be registered last to not interfere with API routes
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 
-		// Skip API routes - these should already be handled by other handlers
-		// This is a safety check in case the route order changes
 		if strings.HasPrefix(path, "/v1") ||
 			strings.HasPrefix(path, "/docs") ||
 			strings.HasPrefix(path, "/openapi") ||
 			path == "/metrics" ||
 			path == "/healthz" ||
 			path == "/readyz" {
-			// Let chi router continue to next handler (shouldn't happen if routes are registered correctly)
 			return
 		}
 
-		// Try to serve the requested file
 		filePath := strings.TrimPrefix(path, "/")
 		if filePath == "" {
 			filePath = "index.html"
 		}
 
-		// Check if file exists
 		fullPath := filepath.Join(webDistFullPath, filePath)
 		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			// If file doesn't exist, serve index.html for SPA routing
 			r.URL.Path = "/index.html"
 		}
 
-		// Serve the file
 		fileServer.ServeHTTP(w, r)
 	})
 }
 
-// serveWebPlaceholder serves a placeholder page when web/dist is not built
 func (h *Handler) serveWebPlaceholder(w http.ResponseWriter, r *http.Request) {
 	html := `<!DOCTYPE html>
 <html>

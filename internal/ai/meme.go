@@ -11,12 +11,10 @@ import (
 	"time"
 )
 
-// ImgflipMemeGenerator is a free meme generator using Imgflip API
 type ImgflipMemeGenerator struct {
 	httpClient *http.Client
 }
 
-// NewImgflipMemeGenerator creates a new Imgflip meme generator
 func NewImgflipMemeGenerator() *ImgflipMemeGenerator {
 	return &ImgflipMemeGenerator{
 		httpClient: &http.Client{
@@ -25,28 +23,22 @@ func NewImgflipMemeGenerator() *ImgflipMemeGenerator {
 	}
 }
 
-// GenerateMeme generates a meme using Imgflip's free API
-// Popular meme templates: 181913649 (Drake), 87743020 (Two Buttons), 112126428 (Distracted Boyfriend)
 func (g *ImgflipMemeGenerator) GenerateMeme(ctx context.Context, topic, question string) (string, error) {
-	// Select a random educational meme template
 	templates := []struct {
 		ID   int
 		Name string
 	}{
-		{181913649, "Drake"},           // Good for comparisons
-		{87743020, "Two Buttons"},      // Good for choices
-		{112126428, "Distracted Boyfriend"}, // Good for focus
-		{129242436, "Change My Mind"},  // Good for opinions
-		{438680, "Batman Slapping"},    // Good for reactions
+		{181913649, "Drake"},
+		{87743020, "Two Buttons"},
+		{112126428, "Distracted Boyfriend"},
+		{129242436, "Change My Mind"},
+		{438680, "Batman Slapping"},
 	}
 
-	// Use a simple template based on topic hash for consistency
-	templateID := templates[0].ID // Default to Drake template
+	templateID := templates[0].ID
 
-	// Create meme text based on topic and question
 	var topText, bottomText string
 	if question != "" {
-		// Use question as top text, topic as bottom
 		topText = truncate(question, 100)
 		bottomText = truncate(fmt.Sprintf("Learning about %s", topic), 100)
 	} else {
@@ -54,12 +46,11 @@ func (g *ImgflipMemeGenerator) GenerateMeme(ctx context.Context, topic, question
 		bottomText = "But you still need to study"
 	}
 
-	// Call Imgflip API
 	apiURL := "https://api.imgflip.com/caption_image"
 	data := url.Values{}
 	data.Set("template_id", fmt.Sprintf("%d", templateID))
-	data.Set("username", "imgflip_hubot") // Public demo account
-	data.Set("password", "imgflip_hubot")  // Public demo account
+	data.Set("username", "imgflip_hubot")
+	data.Set("password", "imgflip_hubot")
 	data.Set("text0", topText)
 	data.Set("text1", bottomText)
 
@@ -104,7 +95,6 @@ func (g *ImgflipMemeGenerator) GenerateMeme(ctx context.Context, topic, question
 	return apiResp.Data.URL, nil
 }
 
-// truncate truncates a string to max length
 func truncate(s string, maxLen int) string {
 	if len(s) <= maxLen {
 		return s

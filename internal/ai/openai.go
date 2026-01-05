@@ -45,7 +45,6 @@ func (c *OpenAIClient) ProcessText(ctx context.Context, req *ProcessRequest) (*d
 			break
 		}
 
-		// Check if error is retryable
 		if !isRetryableError(err) {
 			return nil, err
 		}

@@ -76,9 +76,7 @@ func (s *Service) ProcessText(ctx context.Context, req *domain.ProcessRequest) (
 		response.TopicSource = "inferred"
 	}
 
-	// Generate meme if requested (with timeout - Imgflip is fast, DALL-E fallback may be slower)
 	if req.GenerateMeme {
-		// Get a question for the meme (use first quiz question or flashcard question)
 		var question string
 		if len(response.Quiz) > 0 {
 			question = response.Quiz[0].Q
@@ -86,22 +84,16 @@ func (s *Service) ProcessText(ctx context.Context, req *domain.ProcessRequest) (
 			question = response.Flashcards[0].Q
 		}
 
-		// Use timeout for meme generation (Imgflip is fast ~2s, DALL-E fallback can take 30-60s)
 		memeCtx, memeCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer memeCancel()
 
 		memeURL, err := s.aiClient.GenerateMeme(memeCtx, response.Topic, question)
-		if err != nil {
-			// Log error but don't fail the request - meme generation is optional
-			// The error is silently ignored to not block the main response
-		} else {
+		if err == nil {
 			response.MemeURL = &memeURL
 		}
 	}
 
-	if err := s.saveResult(ctx, req, response); err != nil {
-		// Log error but don't fail the request
-	}
+	_ = s.saveResult(ctx, req, response)
 
 	return response, nil
 }

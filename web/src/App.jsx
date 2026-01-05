@@ -20,7 +20,6 @@ export default function App() {
   const [memeUrls, setMemeUrls] = useState([]);
 
   const generateAdditionalMemes = async (topic, question) => {
-    // Generate 2 more memes to have 3 total
     for (let i = 0; i < 2; i++) {
       try {
         const newMemeUrl = await regenerateMeme(topic, question);
@@ -29,12 +28,10 @@ export default function App() {
         }
       } catch (err) {
         console.error('Failed to generate additional meme:', err);
-        // Continue with other memes even if one fails
       }
     }
   };
 
-  // Load content from URL on mount
   useEffect(() => {
     const loadFromURL = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -47,23 +44,19 @@ export default function App() {
           const response = await getResult(id);
           setResult(response);
           
-          // Set form values from the loaded result
           if (response.topic) {
             setTopic(response.topic);
           }
           
-          // Load meme URLs if available
           if (response.meme_url) {
             setMemeUrls([response.meme_url]);
             setGenerateMeme(true);
-            // Generate 2 more memes in the background
             generateAdditionalMemes(response.topic, response.quiz?.[0]?.q || response.flashcards?.[0]?.q);
           } else {
             setMemeUrls([]);
           }
         } catch (err) {
           setError(err.message || 'Failed to load content');
-          // Clear invalid ID from URL
           const newUrl = new URL(window.location);
           newUrl.searchParams.delete('id');
           window.history.replaceState({}, '', newUrl);
@@ -95,7 +88,6 @@ export default function App() {
       const response = await processText(data);
       setResult(response);
       
-      // Update URL with the result ID
       if (response.id) {
         const newUrl = new URL(window.location);
         newUrl.searchParams.set('id', response.id);
@@ -125,11 +117,10 @@ export default function App() {
     setGenerateMeme(false);
     setResult(null);
     setError(null);
-    setRegeneratingMeme({});
-    setMemeUrls([]);
-    
-    // Clear ID from URL
-    const newUrl = new URL(window.location);
+      setRegeneratingMeme({});
+      setMemeUrls([]);
+      
+      const newUrl = new URL(window.location);
     newUrl.searchParams.delete('id');
     window.history.replaceState({}, '', newUrl);
   };

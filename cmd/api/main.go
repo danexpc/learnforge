@@ -106,7 +106,6 @@ func main() {
 		summaryHandler.RegisterRoutes(r)
 	}
 
-	// Register web UI routes (must be last to catch-all non-API routes)
 	handler.RegisterWebRoutes(r)
 
 	r.Handle("/metrics", promhttp.Handler())
@@ -115,7 +114,7 @@ func main() {
 		Addr:         ":" + cfg.Port,
 		Handler:      r,
 		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 60 * time.Second, // Increased for meme generation
+		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
