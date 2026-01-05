@@ -345,7 +345,39 @@ Errors are automatically sent to the error Slack channel with context informatio
 - [ ] Analytics dashboard
 - [ ] Summary email notifications
 
-## License
+## Deployment
 
-MIT
+### Railway (Recommended - Free Tier)
+
+Deploy to Railway in minutes:
+
+1. **Push to GitHub:**
+   ```bash
+   git push origin main
+   ```
+
+2. **Go to [railway.app](https://railway.app)** and sign up with GitHub
+
+3. **Create New Project:**
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your `learnforge` repository
+
+4. **Add Environment Variables:**
+   - `AI_API_KEY` - Your OpenAI or Gemini API key (required)
+   - `AI_PROVIDER` - `openai` or `gemini` (default: `openai`)
+   - `STORAGE` - `inmem` (default, free) or `postgres`
+   - `AI_BASE_URL` - Optional (defaults work)
+   - `AI_MODEL` - Optional (defaults work)
+
+5. **Deploy:**
+   - Railway auto-detects Go and builds using `railway.json`
+   - Your app will be live at `https://your-app.up.railway.app`
+
+**Free Tier:** $5/month credit (usually enough for small apps)
+
+The `railway.json` file configures Railway to:
+- Build the web UI first (`cd web && npm install && npm run build`)
+- Build the Go binary
+- Start the application
+
 
