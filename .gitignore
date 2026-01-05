@@ -34,3 +34,7 @@ Thumbs.db
 .env
 .env.local
 
+# Web UI
+web/node_modules/
+web/dist/
+

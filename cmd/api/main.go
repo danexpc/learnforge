@@ -106,6 +106,9 @@ func main() {
 		summaryHandler.RegisterRoutes(r)
 	}
 
+	// Register web UI routes (must be last to catch-all non-API routes)
+	handler.RegisterWebRoutes(r)
+
 	r.Handle("/metrics", promhttp.Handler())
 
 	srv := &http.Server{
