@@ -70,8 +70,8 @@ export default function SavedLessons({ onLoadLesson }) {
   }
 
   return (
-    <Card title="📚 Saved Lessons">
-      <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+    <Card title={`📚 Saved Lessons (${savedLessons.length})`}>
+      <div className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
         {savedLessons.map((lesson) => {
           const isLoading = loadingIds.has(lesson.id);
           const hasError = errorIds.has(lesson.id);
