@@ -118,24 +118,30 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
+	log.Printf(`{"level":"info","msg":"Starting server","port":"%s"}`, cfg.Port)
+
+	serverErrors := make(chan error, 1)
 	go func() {
-		log.Printf(`{"level":"info","msg":"Starting server","port":"%s"}`, cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server failed to start: %v", err)
+			serverErrors <- err
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
 
-	log.Println(`{"level":"info","msg":"Shutting down server..."}`)
+	select {
+	case err := <-serverErrors:
+		log.Fatalf("Server failed to start: %v", err)
+	case sig := <-quit:
+		log.Printf(`{"level":"info","msg":"Shutting down server","signal":"%s"}`, sig.String())
+	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		log.Printf(`{"level":"error","msg":"Server forced to shutdown","error":"%v"}`, err)
 	}
 
 	log.Println(`{"level":"info","msg":"Server exited"}`)
