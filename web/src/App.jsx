@@ -79,6 +79,17 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (loading) {
+      setTimeout(() => {
+        const loadingElement = document.getElementById('loading-state');
+        if (loadingElement) {
+          loadingElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [loading]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -298,7 +309,7 @@ export default function App() {
 
             {/* Loading State */}
             {loading && (
-              <div className="mt-8">
+              <div id="loading-state" className="mt-8">
                 <Card>
                   <Loading message="AI is processing your text and generating learning content..." />
                 </Card>
