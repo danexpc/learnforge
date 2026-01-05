@@ -292,14 +292,14 @@ export default function App() {
               </form>
             </Card>
 
-            {/* Loading State */}
-            {loading && (
-              <div className="mt-8">
+            {/* Loading State - Always rendered to prevent layout shift */}
+            <div className="mt-8 min-h-[120px]">
+              {loading && (
                 <Card>
                   <Loading message="AI is processing your text and generating learning content..." />
                 </Card>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Saved Lessons - Below form */}
             <SavedLessons onLoadLesson={loadLessonById} />
