@@ -292,14 +292,11 @@ export default function App() {
               </form>
             </Card>
 
-            {/* Loading State - Fixed height container to prevent layout shift */}
-            <div className="min-h-[140px]">
-              {loading && (
-                <Card>
-                  <Loading message="AI is processing your text and generating learning content..." />
-                </Card>
-              )}
-            </div>
+            {loading && (
+              <Card>
+                <Loading message="AI is processing your text and generating learning content..." />
+              </Card>
+            )}
 
             {/* Saved Lessons - Below form */}
             <SavedLessons onLoadLesson={loadLessonById} />
