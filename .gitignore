@@ -34,6 +34,10 @@ Thumbs.db
 .env
 .env.local
 
+# Config files with secrets (keep example files)
+config/*.yml
+!config/*.example.yml
+
 # Web UI
 web/node_modules/
 web/dist/
