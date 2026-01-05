@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm"]
+
+[phases.install]
+cmds = ["cd web && npm install"]
+
+[phases.build]
+cmds = ["cd web && npm run build", "go build -o bin/api cmd/api/main.go"]
+
+[start]
+cmd = "./bin/api"
+
