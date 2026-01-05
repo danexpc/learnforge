@@ -37,7 +37,15 @@ You should see:
 {"level":"info","msg":"Starting server","port":"8080"}
 ```
 
-### 4. Test the API
+### 4. Test the Application
+
+**Option A: Use the Web UI (Recommended)**
+1. Open `http://localhost:8080` in your browser
+2. Enter text, select mode and level
+3. Click "Generate Learning Content"
+4. View results with shareable URL
+
+**Option B: Test the API**
 
 **Health Check:**
 ```bash
@@ -51,16 +59,23 @@ curl -X POST http://localhost:8080/v1/process \
   -d '{
     "text": "Photosynthesis is how plants make food using sunlight, water, and carbon dioxide.",
     "topic": "Biology",
-    "level": "beginner"
+    "level": "beginner",
+    "generate_meme": false
   }'
 ```
+
+**View API Documentation:**
+- Open `http://localhost:8080/docs` in your browser for interactive API docs
 
 ## What You Get
 
 - ✅ **In-memory storage** - No database needed
 - ✅ **In-memory cache** - No Redis needed  
 - ✅ **Full API functionality** - All endpoints work
+- ✅ **Web UI** - Modern interface at `http://localhost:8080`
+- ✅ **OpenAPI docs** - Interactive docs at `/docs`
 - ✅ **OpenAI integration** - Uses your API key
+- ✅ **Meme generation** - Optional beta feature
 - ❌ **No Slack notifications** (optional)
 - ❌ **No persistent storage** (data lost on restart)
 
@@ -97,10 +112,14 @@ make run
 ## Next Steps
 
 Once it's running:
-1. Test the `/v1/process` endpoint
-2. Try different modes: `lesson`, `flashcards`, `quiz`
-3. Test topic inference (don't provide `topic` field)
-4. Check `/metrics` for Prometheus metrics
+1. **Try the Web UI** - Open `http://localhost:8080` in your browser
+2. **Test the API** - Use `/v1/process` endpoint or the web UI
+3. **Try different modes** - `lesson`, `flashcards`, `quiz`
+4. **Test topic inference** - Don't provide `topic` field and let AI detect it
+5. **Try meme generation** - Enable the beta meme feature in the web UI
+6. **Check API docs** - Visit `/docs` for interactive OpenAPI documentation
+7. **View metrics** - Check `/metrics` for Prometheus metrics
+8. **Share content** - Copy the URL with `?id=...` to share generated content
 
 ## Using Gemini Instead
 

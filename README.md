@@ -12,10 +12,14 @@ A production-style Go microservice that transforms raw text into structured lear
 
 - **Text Processing**: Converts raw text into structured learning content (summary, key points, flashcards, quizzes)
 - **Topic Detection**: Auto-detects topics when not provided, with confidence scores
+- **Web UI**: Modern Preact-based interface with visual content display
+- **Meme Generation**: Optional AI-powered meme generation for educational content (beta)
+- **URL-based State**: Shareable URLs with content IDs for bookmarking and sharing
 - **Flexible Storage**: Supports in-memory (default) or PostgreSQL storage
 - **Observability**: Structured logging, Prometheus metrics, request tracing
 - **Production Ready**: Timeouts, retries, graceful shutdown, error handling
 - **Clean Architecture**: Dependency inversion, interface-based design
+- **OpenAPI Documentation**: Interactive API docs at `/docs`
 - **Slack Integration**: Error logging and daily summaries to separate Slack channels
 - **Daily Summaries**: Automated daily summaries with Redis caching (in-memory fallback)
 - **Manual Summary Trigger**: Secure API endpoint to generate and send summaries on-demand
@@ -68,6 +72,14 @@ learnforge/
 │   ├── store/            # Storage interface, implementations, and migrations
 │   ├── ai/               # AI client interface and implementation
 │   └── config/           # Configuration management
+├── web/                  # Frontend web UI (Preact + Vite)
+│   ├── src/
+│   │   ├── components/   # UI components
+│   │   ├── utils/        # API client utilities
+│   │   └── App.jsx       # Main app component
+│   └── dist/             # Built static files
+├── api/
+│   └── openapi.yaml      # OpenAPI specification
 ├── go.mod
 ├── go.sum
 ├── Makefile
@@ -116,6 +128,18 @@ Environment variables always override YAML values, allowing you to override sens
    ```
 
 The service will start on `http://localhost:8080` (configurable via `PORT` env var or config file).
+
+**Access the Web UI:**
+- Open `http://localhost:8080` in your browser
+- The web UI provides a visual interface for generating learning content
+- If `web/dist` doesn't exist, you'll see instructions to build the UI
+
+**Build the Web UI:**
+```bash
+make build-web
+# or
+cd web && npm install && npm run build
+```
 
 ### Running with PostgreSQL and Redis
 
@@ -173,7 +197,8 @@ curl -X POST http://localhost:8080/v1/process \
     "mode": "lesson",
     "topic": "Water Cycle",
     "level": "beginner",
-    "language": "en"
+    "language": "en",
+    "generate_meme": false
   }'
 ```
 
@@ -196,6 +221,7 @@ curl -X POST http://localhost:8080/v1/process \
       "answer": "Oceans"
     }
   ],
+  "meme_url": "https://i.imgflip.com/...",
   "meta": {
     "model": "gpt-3.5-turbo",
     "provider": "openai-compatible",
@@ -210,6 +236,22 @@ curl -X POST http://localhost:8080/v1/process \
 ```bash
 curl http://localhost:8080/v1/process/{id}
 ```
+
+### Web UI
+
+Access the web interface at `http://localhost:8080`:
+- Visual form for text input
+- Mode selection (lesson, flashcards, quiz)
+- Level selection (beginner, intermediate, advanced)
+- Optional meme generation (beta feature)
+- Shareable URLs with content IDs
+- Responsive design with modern UI
+
+### API Documentation
+
+Interactive OpenAPI documentation is available at:
+- **Swagger UI**: `http://localhost:8080/docs`
+- **OpenAPI Spec**: `http://localhost:8080/openapi.yaml`
 
 ### Health Endpoints
 
@@ -253,6 +295,7 @@ Environment variables override YAML values:
 | `DATABASE_URL` | - | PostgreSQL connection string (required for postgres mode) |
 | `AI_BASE_URL` | `https://api.openai.com` | OpenAI-compatible API base URL |
 | `AI_API_KEY` | - | API key for AI service (required) |
+| `AI_PROVIDER` | `openai` | AI provider: `openai` or `gemini` |
 | `AI_MODEL` | `gpt-3.5-turbo` | Model to use |
 | `LOG_LEVEL` | `info` | Logging level |
 | `SLACK_WEBHOOK_URL` | - | Slack webhook URL for daily summaries |
@@ -337,13 +380,13 @@ Errors are automatically sent to the error Slack channel with context informatio
 ### Future Improvements
 
 - [ ] Rate limiting per IP (token bucket)
-- [ ] OpenAPI/Swagger documentation
 - [ ] Batch processing support
 - [ ] Webhook notifications for async processing
 - [ ] Multi-language support improvements
 - [ ] Custom prompt templates
 - [ ] Analytics dashboard
 - [ ] Summary email notifications
+- [ ] Enhanced meme generation with more templates
 
 ## Deployment
 
@@ -375,9 +418,15 @@ Deploy to Railway in minutes:
 
 **Free Tier:** $5/month credit (usually enough for small apps)
 
-The `railway.json` file configures Railway to:
+The `railway.json` and `nixpacks.toml` files configure Railway to:
+- Install Node.js and Go
 - Build the web UI first (`cd web && npm install && npm run build`)
 - Build the Go binary
 - Start the application
+
+**Access Your Deployed App:**
+- Web UI: `https://your-app.up.railway.app`
+- API Docs: `https://your-app.up.railway.app/docs`
+- Health Check: `https://your-app.up.railway.app/healthz`
 
 
