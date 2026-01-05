@@ -1,0 +1,12 @@
+port: "8080"
+storage: "postgres"
+database_url: ""
+ai_base_url: "https://api.openai.com"
+ai_api_key: ""
+ai_model: "gpt-4"
+log_level: "info"
+slack_webhook_url: ""
+slack_error_webhook_url: ""
+summary_api_key: ""
+redis_url: ""
+
