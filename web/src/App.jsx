@@ -295,16 +295,8 @@ export default function App() {
                   {loading ? 'Processing...' : 'Generate Learning Content'}
                 </Button>
               </form>
-            </Card>
-
-            {/* Loading State - Always rendered to prevent layout shift */}
-            <div className="mt-8 min-h-[120px]">
-              {loading && (
-                <Card>
-                  <Loading message="AI is processing your text and generating learning content..." />
-                </Card>
               )}
-            </div>
+            </Card>
 
             {/* Saved Lessons - Below form */}
             <SavedLessons onLoadLesson={loadLessonById} />
