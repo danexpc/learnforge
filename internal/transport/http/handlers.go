@@ -35,6 +35,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/healthz", h.healthz)
 	r.Get("/readyz", h.readyz)
 	r.Get("/metrics", h.metrics)
+	
+	h.RegisterOpenAPIRoutes(r)
 }
 
 func (h *Handler) processText(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,419 @@
+openapi: 3.0.3
+info:
+  title: LearnForge API
+  description: |
+    LearnForge is an AI-powered service that transforms raw text into structured learning content.
+    It generates summaries, key points, flashcards, and quiz questions tailored to specific topics and difficulty levels.
+  version: 1.0.0
+  contact:
+    name: LearnForge API Support
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.learnforge.com
+    description: Production server
+
+tags:
+  - name: Processing
+    description: Text processing operations
+  - name: Results
+    description: Retrieve processed results
+  - name: Health
+    description: Health and readiness checks
+  - name: Summary
+    description: Daily summary operations
+
+paths:
+  /v1/process:
+    post:
+      tags:
+        - Processing
+      summary: Process text into structured learning content
+      description: |
+        Converts raw text into structured learning content including summary, key points,
+        flashcards, and quiz questions. Can auto-detect topic or use provided topic.
+      operationId: processText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessRequest'
+            examples:
+              basic:
+                summary: Basic request
+                value:
+                  text: "Photosynthesis is the process by which plants convert light energy into chemical energy."
+              withTopic:
+                summary: With topic and level
+                value:
+                  text: "The water cycle is the continuous movement of water on Earth."
+                  topic: "Science"
+                  level: "beginner"
+                  mode: "lesson"
+      responses:
+        '200':
+          description: Successfully processed text
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Upstream service error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '408':
+          description: Request timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/process/{id}:
+    get:
+      tags:
+        - Results
+      summary: Get processed result by ID
+      description: Retrieves a previously processed result by its unique identifier
+      operationId: getResult
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the processed result
+          schema:
+            type: string
+            example: "abc123def456"
+      responses:
+        '200':
+          description: Successfully retrieved result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessResponse'
+        '404':
+          description: Result not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/summary/generate:
+    post:
+      tags:
+        - Summary
+      summary: Generate and send daily summary
+      description: |
+        Manually triggers generation of a daily summary and sends it to Slack.
+        Requires API key authentication via X-API-Key header.
+      operationId: generateSummary
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: Date in YYYY-MM-DD format (defaults to yesterday)
+          schema:
+            type: string
+            format: date
+            example: "2024-01-15"
+      responses:
+        '200':
+          description: Summary generated and sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Summary generated and sent to Slack"
+                  summary:
+                    $ref: '#/components/schemas/DailySummary'
+        '401':
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /healthz:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the service
+      operationId: healthz
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  time:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+
+  /readyz:
+    get:
+      tags:
+        - Health
+      summary: Readiness check
+      description: Returns the readiness status of the service
+      operationId: readyz
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+                  time:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+
+  /metrics:
+    get:
+      tags:
+        - Health
+      summary: Prometheus metrics
+      description: Returns Prometheus metrics in text format
+      operationId: metrics
+      responses:
+        '200':
+          description: Metrics in Prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for summary generation endpoint
+
+  schemas:
+    ProcessRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Raw text to process into learning content
+          example: "Photosynthesis is how plants make food using sunlight."
+        mode:
+          type: string
+          enum: [lesson, flashcards, quiz]
+          default: lesson
+          description: Content generation mode
+        topic:
+          type: string
+          nullable: true
+          description: Topic for the content (optional, will be auto-detected if not provided)
+          example: "Biology"
+        level:
+          type: string
+          nullable: true
+          enum: [beginner, intermediate, advanced]
+          description: Difficulty level
+          example: "beginner"
+        language:
+          type: string
+          default: en
+          description: Language code (ISO 639-1)
+          example: "en"
+        idempotency_key:
+          type: string
+          nullable: true
+          description: Optional idempotency key to prevent duplicate processing
+          example: "unique-request-id-123"
+
+    ProcessResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this result
+          example: "abc123def456"
+        topic:
+          type: string
+          description: Topic of the content
+          example: "Biology"
+        topic_source:
+          type: string
+          enum: [user, inferred]
+          description: Source of the topic (user-provided or AI-inferred)
+        topic_confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence score if topic was inferred (0.0-1.0)
+          example: 0.95
+        summary:
+          type: string
+          description: Generated summary of the content
+          example: "Photosynthesis is a vital process..."
+        key_points:
+          type: array
+          items:
+            type: string
+          description: Array of key points extracted from the text
+          example: ["Plants use sunlight", "Converts CO2 to glucose"]
+        flashcards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Flashcard'
+          description: Generated flashcards
+        quiz:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuizItem'
+          description: Generated quiz questions
+        meta:
+          $ref: '#/components/schemas/Meta'
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the result was created
+          example: "2024-01-15T10:30:00Z"
+
+    Flashcard:
+      type: object
+      properties:
+        q:
+          type: string
+          description: Question
+          example: "What is photosynthesis?"
+        a:
+          type: string
+          description: Answer
+          example: "The process by which plants convert light energy into chemical energy."
+
+    QuizItem:
+      type: object
+      properties:
+        q:
+          type: string
+          description: Question
+          example: "What do plants need for photosynthesis?"
+        choices:
+          type: array
+          items:
+            type: string
+          description: Multiple choice options
+          example: ["Sunlight only", "Sunlight, water, and CO2", "Water only"]
+        answer:
+          type: string
+          description: Correct answer
+          example: "Sunlight, water, and CO2"
+
+    Meta:
+      type: object
+      properties:
+        model:
+          type: string
+          description: AI model used
+          example: "gpt-3.5-turbo"
+        provider:
+          type: string
+          description: AI provider
+          example: "openai"
+        processing_ms:
+          type: integer
+          description: Processing time in milliseconds
+          example: 1234
+
+    DailySummary:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+          description: Date of the summary
+        total_requests:
+          type: integer
+          description: Total number of requests processed
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicStats'
+          description: Statistics by topic
+        errors:
+          type: integer
+          description: Number of errors encountered
+
+    TopicStats:
+      type: object
+      properties:
+        topic:
+          type: string
+          description: Topic name
+        count:
+          type: integer
+          description: Number of requests for this topic
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [invalid_argument, internal, upstream_timeout, upstream_error, not_found]
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+              example: "text is required"
+
