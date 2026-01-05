@@ -192,7 +192,9 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {!result ? (
           <div className="max-w-3xl mx-auto space-y-6">
-            <SavedLessons onLoadLesson={loadLessonById} />
+            <div className="flex-shrink-0">
+              <SavedLessons onLoadLesson={loadLessonById} />
+            </div>
             
             <Card title="Transform Text into Learning Content">
               <form onSubmit={handleSubmit} className="space-y-6">

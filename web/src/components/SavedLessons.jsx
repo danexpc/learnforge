@@ -71,7 +71,7 @@ export default function SavedLessons({ onLoadLesson }) {
 
   return (
     <Card title="📚 Saved Lessons">
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
         {savedLessons.map((lesson) => {
           const isLoading = loadingIds.has(lesson.id);
           const hasError = errorIds.has(lesson.id);
