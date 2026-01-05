@@ -1,0 +1,13 @@
+port: "8080"
+storage: "inmem"
+database_url: ""
+ai_provider: "openai"  # "openai" or "gemini"
+ai_base_url: "https://api.openai.com"
+ai_api_key: ""
+ai_model: "gpt-3.5-turbo"  # For Gemini: "gemini-2.0-flash-exp" or "gemini-1.5-pro"
+log_level: "info"
+slack_webhook_url: ""
+slack_error_webhook_url: ""
+summary_api_key: ""
+redis_url: ""
+
