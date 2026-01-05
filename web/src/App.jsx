@@ -79,17 +79,6 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    if (loading) {
-      setTimeout(() => {
-        const loadingElement = document.getElementById('loading-state');
-        if (loadingElement) {
-          loadingElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    }
-  }, [loading]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -203,10 +192,6 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {!result ? (
           <div className="max-w-3xl mx-auto space-y-6">
-            <div className="flex-shrink-0">
-              <SavedLessons onLoadLesson={loadLessonById} />
-            </div>
-            
             <Card title="Transform Text into Learning Content">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Text Input */}
@@ -309,12 +294,15 @@ export default function App() {
 
             {/* Loading State */}
             {loading && (
-              <div id="loading-state" className="mt-8">
+              <div className="mt-8">
                 <Card>
                   <Loading message="AI is processing your text and generating learning content..." />
                 </Card>
               </div>
             )}
+
+            {/* Saved Lessons - Below form */}
+            <SavedLessons onLoadLesson={loadLessonById} />
           </div>
         ) : (
           <div className="space-y-6">
